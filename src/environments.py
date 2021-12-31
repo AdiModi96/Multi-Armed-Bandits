@@ -1,6 +1,6 @@
 from static_distribution_bandits import BinaryRewardsBandit
 
-class MultiArmedBinaryRewardsBanditEnvironment:
+class MultiArmedStaticBinaryRewardsBanditEnvironment:
 
     MAX_REWARD = BinaryRewardsBandit.MAX_REWARD
 

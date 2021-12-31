@@ -1,5 +1,5 @@
 import os
-from environments import MultiArmedBinaryRewardsBanditEnvironment as Environment
+from environments import MultiArmedStaticBinaryRewardsBanditEnvironment as Environment
 from prettytable import PrettyTable
 from os import system
 import time
