@@ -18,7 +18,7 @@ class BinaryRewardsBandit:
         for reward in BinaryRewardsBandit.REWARDS:
             self.distribution[reward.name] = {
                 'value': reward.value,
-                'weight': random.uniform(0, 1)
+                'weight': random.uniform(0.4, 0.6)
             }
             total_weight += self.distribution[reward.name]['weight']
 
