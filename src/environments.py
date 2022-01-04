@@ -1,8 +1,11 @@
 from static_distribution_bandits import BinaryRewardsBandit
 
+
 class MultiArmedStaticBinaryRewardsBanditEnvironment:
+    REWARDS = BinaryRewardsBandit.REWARDS
 
     MAX_REWARD = BinaryRewardsBandit.MAX_REWARD
+    MIN_REWARD = BinaryRewardsBandit.MIN_REWARD
 
     def __init__(self, num_arms):
         self.num_bandits = num_arms

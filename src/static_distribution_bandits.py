@@ -2,8 +2,8 @@ from enum import Enum
 import random
 from collections import OrderedDict
 
-class BinaryRewardsBandit:
 
+class BinaryRewardsBandit:
     class REWARDS(Enum):
         FAILURE = 0
         SUCCESS = 1
@@ -18,13 +18,12 @@ class BinaryRewardsBandit:
         for reward in BinaryRewardsBandit.REWARDS:
             self.distribution[reward.name] = {
                 'value': reward.value,
-                'weight': random.uniform(0.4, 0.6)
+                'weight': random.uniform(0.25, 0.75)
             }
             total_weight += self.distribution[reward.name]['weight']
 
         for reward in BinaryRewardsBandit.REWARDS:
             self.distribution[reward.name]['probability'] = self.distribution[reward.name]['weight'] / total_weight
-
 
         self.history = []
 

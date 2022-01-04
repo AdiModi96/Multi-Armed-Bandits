@@ -1,59 +1,43 @@
-import os
 from environments import MultiArmedStaticBinaryRewardsBanditEnvironment as Environment
-from static_distribution_bandits import BinaryRewardsBandit as Bandit
 from prettytable import PrettyTable
-from os import system
+from utils import clear_terminal
 import time
 from enum import Enum
 
 
 class StaticBinaryRewardsAgent:
-
-    @staticmethod
-    def clear_terminal():
-        if os.name == 'nt':
-            system('cls')
-        elif os.name == 'posix':
-            system('clear')
-        else:
-            print('Unknown operating system')
-
     class VALUE_FUNCTION(Enum):
         EXPECTED_REWARD = 0
 
-    def __init__(self, num_arms=3, num_turns=10, value_function=VALUE_FUNCTION.EXPECTED_REWARD, initial_values=[0] * 3):
+    class POLICY(Enum):
+        USER_DEFINED = 0
+
+    def __init__(self, num_arms, num_turns, value_function, initial_values, policy):
         self.num_arms = num_arms
         self.num_turns = num_turns
-        self.environment = Environment(num_arms=num_arms)
-        self.value_function = value_function
 
+        self.environment = Environment(num_arms=num_arms)
+
+        self.value_function = value_function
         self.initial_values = initial_values
+
+        self.policy = policy
+
         self.stats_history = []
         self.events_history = []
 
-    def print_stats_table(self, timestamp):
+    def print_stats_at_timestamp(self, timestamp):
         stats = self.stats_history[timestamp]
 
         table = PrettyTable(['Metrics/Bandits'] + ['Bandit #{}'.format(idx) for idx in range(self.num_arms)])
         for metric in stats[0].keys():
             row = [metric]
             for bandit_idx in range(self.num_arms):
-                row.append(stats[bandit_idx][metric])
+                row.append(round(stats[bandit_idx][metric], 5))
             table.add_row(row)
         print(table)
 
-    def print_distributions(self):
-        table = PrettyTable(['Probability/Bandits'] + ['Bandit #{}'.format(idx) for idx in range(self.num_arms)])
-
-        distributions = self.environment.get_distributions()
-
-        row = ['probability of success']
-        for bandit_idx in range(self.num_arms):
-            row.append(distributions[bandit_idx][Bandit.REWARDS.SUCCESS.name]['probability'])
-        table.add_row(row)
-        print(table)
-
-    def print_history_table(self, timestamp):
+    def print_events_history_till_timestamp(self, timestamp):
         table = PrettyTable(['Timestamp'] + ['Bandit #{}'.format(idx) for idx in range(self.num_arms)])
         for t in range(timestamp + 1):
             table.add_row(
@@ -63,8 +47,21 @@ class StaticBinaryRewardsAgent:
             )
         print(table)
 
-    def commence_experiment(self):
+    def get_choice(self):
+        choice = None
+        if self.policy == StaticBinaryRewardsAgent.POLICY.USER_DEFINED:
+            print('Bandit options: {}'.format([bandit_idx for bandit_idx in range(self.num_arms)]))
+            while True:
+                choice = int(input('Enter your choice of bandit: '))
+                if choice >= 0 and choice < self.num_arms:
+                    break
+                else:
+                    print('Enter a valid option')
+        else:
+            print('Enter a valid option')
+        return choice
 
+    def commence(self):
         timestamp = 0
         bandit_stats = []
         for bandit_idx in range(self.num_arms):
@@ -80,10 +77,10 @@ class StaticBinaryRewardsAgent:
         self.stats_history.append(bandit_stats)
 
         while timestamp < self.num_turns:
-            StaticBinaryRewardsAgent.clear_terminal()
+            clear_terminal()
 
             print('-' * 80)
-            print('Timestamp: {} / {}'.format(timestamp, self.num_turns))
+            print('Timestamp: {} / {}'.format(timestamp, self.num_turns - 1))
             print('-' * 80)
 
             if timestamp < 0:
@@ -92,19 +89,14 @@ class StaticBinaryRewardsAgent:
                 time.sleep(1)
                 continue
             elif timestamp < len(self.events_history):
-                self.print_stats_table(timestamp)
+                self.print_stats_at_timestamp(timestamp)
                 print()
-                self.print_history_table(timestamp)
+                self.print_events_history_till_timestamp(timestamp)
             elif timestamp == len(self.events_history):
-                self.print_stats_table(timestamp)
+                self.print_stats_at_timestamp(timestamp)
                 print()
-                print('Bandit options: {}'.format([bandit_idx for bandit_idx in range(self.num_arms)]))
-                while True:
-                    choice = int(input('Enter your choice of bandit: '))
-                    if choice >= 0 and choice < self.num_arms:
-                        break
-                    else:
-                        print('Enter a valid option')
+
+                choice = self.get_choice()
                 reward = self.environment.act(choice)
 
                 new_stats = []
@@ -120,8 +112,10 @@ class StaticBinaryRewardsAgent:
                             elif reward.value == 1:
                                 bandit_stats['num_of_positive_rewards'] += 1
 
-                            bandit_stats['expected_reward'] += (reward.value - bandit_stats['expected_reward']) / (bandit_stats['num_times_acted'])
-                            bandit_stats['value'] += (reward.value - bandit_stats['value']) / (bandit_stats['num_times_acted'])
+                            bandit_stats['expected_reward'] += (reward.value - bandit_stats['expected_reward']) / (
+                                bandit_stats['num_times_acted'])
+                            bandit_stats['value'] += (reward.value - bandit_stats['value']) / (
+                                bandit_stats['num_times_acted'])
 
                             new_stats.append(bandit_stats)
                         else:
@@ -135,8 +129,7 @@ class StaticBinaryRewardsAgent:
                     }
                 )
 
-                self.print_history_table(timestamp)
-
+                self.print_events_history_till_timestamp(timestamp)
             print()
 
             while True:
@@ -152,35 +145,3 @@ class StaticBinaryRewardsAgent:
                     break
                 else:
                     print('Enter a valid option')
-
-    def conclude_experiment(self):
-        StaticBinaryRewardsAgent.clear_terminal()
-
-        print('The experiment has concluded ...')
-        print()
-
-        print('The following were the true distributions: ')
-        self.print_distributions()
-        print()
-
-        print('Final stats: ')
-        self.print_stats_table(self.num_turns)
-        print()
-
-        print('History:')
-        self.print_history_table(self.num_turns - 1)
-        print()
-
-
-parameters = {
-    'num_arms': 3,
-    'num_turns': 5,
-    'value_function': StaticBinaryRewardsAgent.VALUE_FUNCTION.EXPECTED_REWARD,
-    'initial_values': [0] * 3
-}
-
-print('The following are the experiment parameters')
-
-agent = StaticBinaryRewardsAgent(**parameters)
-agent.commence_experiment()
-agent.conclude_experiment()
