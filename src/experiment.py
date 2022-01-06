@@ -177,7 +177,7 @@ class Experiment:
         plt.grid()
         plt.xlabel('- Time →')
         plt.ylabel('- Value →')
-        value_over_time_subplot_axes.set_ylim([-0.1, max(self.agent.initial_values) * 1.1])
+        value_over_time_subplot_axes.set_ylim([-0.1, max(max(self.agent.initial_values), Environment.MAX_REWARD) * 1.1])
 
         for bandit_idx in range(self.num_arms):
 
@@ -223,6 +223,7 @@ class Experiment:
     def conclude(self):
         clear_terminal()
         print('Concluding the experiment...')
+        print()
 
         outputs_folder_path = os.path.join(paths.experiments_folder_path, self.id)
         if not os.path.isdir(outputs_folder_path):
