@@ -26,10 +26,16 @@ class StaticBinaryRewardsAgent:
         self.stats_history = []
         self.events_history = []
 
+    def get_stats_history(self):
+        return self.stats_history
+
+    def get_events_history(self):
+        return self.events_history
+
     def print_stats_at_timestamp(self, timestamp):
         stats = self.stats_history[timestamp]
 
-        table = PrettyTable(['Metrics/Bandits'] + ['Bandit #{}'.format(idx) for idx in range(self.num_arms)])
+        table = PrettyTable(['Metrics/Bandits'] + ['Bandit {}'.format(idx) for idx in range(self.num_arms)])
         for metric in stats[0].keys():
             row = [metric]
             for bandit_idx in range(self.num_arms):
@@ -38,7 +44,7 @@ class StaticBinaryRewardsAgent:
         print(table)
 
     def print_events_history_till_timestamp(self, timestamp):
-        table = PrettyTable(['Timestamp'] + ['Bandit #{}'.format(idx) for idx in range(self.num_arms)])
+        table = PrettyTable(['Timestamp'] + ['Bandit {}'.format(idx) for idx in range(self.num_arms)])
         for t in range(timestamp + 1):
             table.add_row(
                 ['t={}'.format(str(t).zfill(3))] + \
@@ -65,15 +71,15 @@ class StaticBinaryRewardsAgent:
         timestamp = 0
         bandit_stats = []
         for bandit_idx in range(self.num_arms):
-            bandit_stats.append(
-                {
-                    'num_times_acted': 0,
-                    'num_of_positive_rewards': 0,
-                    'num_of_negative_rewards': 0,
-                    'expected_reward': 0,
-                    'value': self.initial_values[bandit_idx]
-                }
-            )
+            bandit_stat = {
+                'num_times_acted': 0,
+                'expected_reward': 0,
+                'value': self.initial_values[bandit_idx]
+            }
+            for reward in Environment.REWARDS:
+                bandit_stat['num_of_{}'.format(reward.name)] = 0
+
+            bandit_stats.append(bandit_stat)
         self.stats_history.append(bandit_stats)
 
         while timestamp < self.num_turns:
@@ -107,10 +113,7 @@ class StaticBinaryRewardsAgent:
 
                             bandit_stats = self.stats_history[-1][choice].copy()
                             bandit_stats['num_times_acted'] += 1
-                            if reward.value == 0:
-                                bandit_stats['num_of_negative_rewards'] += 1
-                            elif reward.value == 1:
-                                bandit_stats['num_of_positive_rewards'] += 1
+                            bandit_stats['num_of_{}'.format(reward.name)] += 1
 
                             bandit_stats['expected_reward'] += (reward.value - bandit_stats['expected_reward']) / (
                                 bandit_stats['num_times_acted'])
