@@ -158,6 +158,7 @@ class Experiment:
             ['t={}'.format(t) for t in range(self.num_turns)],
             all_bandits_reward_over_time,
             marker='o',
+            color='gray',
             linestyle='dashed',
             alpha=0.9,
             linewidth=3
@@ -176,7 +177,7 @@ class Experiment:
         plt.grid()
         plt.xlabel('- Time →')
         plt.ylabel('- Value →')
-        value_over_time_subplot_axes.set_ylim([-0.1, self.environment.MAX_REWARD * 1.1])
+        value_over_time_subplot_axes.set_ylim([-0.1, max(self.agent.initial_values) * 1.1])
 
         for bandit_idx in range(self.num_arms):
 
